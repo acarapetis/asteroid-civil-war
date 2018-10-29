@@ -1,8 +1,6 @@
 #include "game.hpp"
 #include <boost/bind.hpp>
 Game game;
-using namespace std;
-using namespace boost;
 
 void initAllegro() {
     al_init();

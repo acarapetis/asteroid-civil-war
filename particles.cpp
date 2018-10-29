@@ -1,5 +1,4 @@
 #include "particles.hpp"
-using namespace std;
 
 ParticleType::ParticleType(shared_ptr<Drawable> visual) : 
     visual(visual),

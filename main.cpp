@@ -2,9 +2,6 @@
 #include <boost/bind.hpp>
 #include <boost/math/special_functions/erf.hpp>
 
-using namespace std;
-using namespace boost;
-
 typedef std::list<shared_ptr<Asteroid> > astV;
 typedef std::map<char, function<void()> > bindMap;
 astV asteroids;
@@ -19,7 +16,7 @@ double myerf(double);
 void calcErf() {
     for (int i = 0; i < 100; i++) {
         double x = double(i-50)/50;
-        erfv[i] = double(math::erf(x)+1.0)/2.00;
+        erfv[i] = double(boost::math::erf(x)+1.0)/2.00;
     }
 }
 

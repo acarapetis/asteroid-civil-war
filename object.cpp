@@ -1,7 +1,5 @@
 #include "object.hpp"
 #include <boost/lambda/lambda.hpp>
-using namespace std;
-using namespace boost;
 
 // Sprite
 Sprite::Sprite(R2 center, ALLEGRO_BITMAP *bitmap, double rotation, double scale) : 

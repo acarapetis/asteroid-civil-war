@@ -1,7 +1,5 @@
 #include "point.hpp"
 
-using namespace std;
-
 R2::R2(double x, double y): x(x), y(y) {}
 R2::R2(): x(0), y(0) {}
 

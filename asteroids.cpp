@@ -1,7 +1,5 @@
 #include "asteroids.hpp"
 
-using namespace std;
-
 list<R2> generateAsteroid(double radius, double dr, double dtheta) {
     //o->addDrawable(new Circle(R2(0,0), al_map_rgba_f(1.0,1.0,1.0,1.0), radius, false, 1.0, al_map_rgba_f(1.0,0.5,0.0,0.8)));
 

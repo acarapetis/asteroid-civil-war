@@ -18,6 +18,13 @@
 #define foreach BOOST_FOREACH
 using boost::shared_ptr;
 using boost::weak_ptr;
+using std::list;
+using std::string;
+using boost::lexical_cast;
+using std::vector;
+using std::cout;
+using std::endl;
+using boost::function;
 
 class R2;
 typedef std::vector<R2> pointVec;
