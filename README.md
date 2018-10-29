@@ -1,6 +1,6 @@
 # Asteroids
 
-This is a "game" I wrote in 2010. Highlights are the particles and the colliding/exploding procedurally generated asteroids.
+This is a "game" I wrote in 2010. It's really just a basic 2D engine with a fun particle system. 
 
 ## Building
 
