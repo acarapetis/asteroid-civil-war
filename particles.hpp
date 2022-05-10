@@ -8,10 +8,11 @@
  * applyGravity().
  */
 #pragma once
-#include "allegro_all.hpp"
 #include <algorithm>
 #include <map>
 #include <utility>
+
+#include "allegro_all.hpp"
 
 // Everybody can know about everyone else.
 // Bite me, Djikstra. I'm anthropomorphising my classes.
@@ -22,10 +23,10 @@ class EmitterType;
 class EmitterInstance;
 class ParticleSystem;
 
-#include "global.hpp"
-#include "object.hpp"
-#include "graphics.hpp"
 #include "blending.hpp"
+#include "global.hpp"
+#include "graphics.hpp"
+#include "object.hpp"
 
 // Numerically Calculated Particle - all values have a delta function
 // applied each frame, additive or multiplicative based on commonsense.
@@ -37,8 +38,8 @@ public:
 
     R2 initialVelocity;
     R2 randomVelocity;
-    R2 acceleration;      // additive
-    double drag;          // multiplicative
+    R2 acceleration; // additive
+    double drag;     // multiplicative
 
     double initialRotation;
     double randomRotation;
@@ -46,8 +47,8 @@ public:
 
     double initialScale;
     double randomScale;
-    double deltaScale;    // multiplicative
-    
+    double deltaScale; // multiplicative
+
     BlendMode initialBlender;
     BlendMode finalBlender;
 
@@ -61,9 +62,10 @@ public:
 class ParticleInstance : public Gravitee {
     shared_ptr<ParticleType> type;
     shared_ptr<Drawable> visual;
+
 public:
-    double  age;
-    double  vRot;
+    double age;
+    double vRot;
 
     shared_ptr<ParticleType> getType();
 
@@ -88,15 +90,18 @@ public:
     void tick(double dt);
 
     // provided by gravitee: void gravitateTowards(R2 position, double mass);
-    ParticleInstance(shared_ptr<ParticleType> type, R2 center = R2(), R2 velocity = R2(), double vRot = 0);
+    ParticleInstance(shared_ptr<ParticleType> type, R2 center = R2(),
+                     R2 velocity = R2(), double vRot = 0);
     ParticleInstance(shared_ptr<EmitterInstance> emitter);
 };
 
-struct compareZOrder { 
+struct compareZOrder {
     // Sorting relation for order of particle rendering
     // Precedence: zOrder, then age
-    bool operator()(const shared_ptr<ParticleInstance> a, const shared_ptr<ParticleInstance> b) const {
-        if (a->zOrder() == b->zOrder()) return a->age < b->age;
+    bool operator()(const shared_ptr<ParticleInstance> a,
+                    const shared_ptr<ParticleInstance> b) const {
+        if (a->zOrder() == b->zOrder())
+            return a->age < b->age;
         return a->zOrder() < b->zOrder();
     }
 };
@@ -122,7 +127,9 @@ public:
 
     bool freezeVisuals;
 
-    EmitterInstance(shared_ptr<EmitterType> emitter, R2 position, double rotation = 0, R2 velocity = R2(0,0), bool freezeVisuals = false);
+    EmitterInstance(shared_ptr<EmitterType> emitter, R2 position,
+                    double rotation = 0, R2 velocity = R2(0, 0),
+                    bool freezeVisuals = false);
 
     int tick(double dt);
 };
@@ -142,12 +149,13 @@ public:
 // This is the manager.
 class ParticleSystem {
     std::vector<shared_ptr<ParticleInstance> > particles;
-    std::vector<shared_ptr<EmitterInstance> >  emitters;
+    std::vector<shared_ptr<EmitterInstance> > emitters;
+
 public:
     ParticleSystem();
 
     void addParticleInstance(shared_ptr<ParticleInstance> instance);
-    void addEmitterInstance (shared_ptr<EmitterInstance>  instance);
+    void addEmitterInstance(shared_ptr<EmitterInstance> instance);
 
     void tickEmitter(shared_ptr<EmitterInstance> emitter, double dt);
 

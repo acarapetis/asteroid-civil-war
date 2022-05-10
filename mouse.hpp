@@ -1,6 +1,7 @@
 #pragma once
-#include "global.hpp"
 #include <allegro5/allegro5.h>
+
+#include "global.hpp"
 
 class Mouse {
     bool pressed[3];
@@ -18,9 +19,9 @@ class Mouse {
     static const int MOUSE_M_NEW   = 0x20;
     static const int MOUSE_MS      = (MOUSE_M | MOUSE_M_NEW);*/
 
-    void mousedown(struct ALLEGRO_MOUSE_EVENT *mouse);
-    void mouseup(struct ALLEGRO_MOUSE_EVENT *mouse);
-    void mouseaxes(struct ALLEGRO_MOUSE_EVENT *mouse);
+    void mousedown(struct ALLEGRO_MOUSE_EVENT* mouse);
+    void mouseup(struct ALLEGRO_MOUSE_EVENT* mouse);
+    void mouseaxes(struct ALLEGRO_MOUSE_EVENT* mouse);
 
 public:
     R2 position;

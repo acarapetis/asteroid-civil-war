@@ -1,11 +1,11 @@
 #pragma once
+#include "asteroids.hpp"
+#include "camera.hpp"
 #include "global.hpp"
 #include "graphics.hpp"
-#include "camera.hpp"
 #include "keyboard.hpp"
 #include "mouse.hpp"
 #include "object.hpp"
-#include "asteroids.hpp"
 //#include "particles.hpp"
 #include "allegro_all.hpp"
 

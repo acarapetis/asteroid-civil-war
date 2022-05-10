@@ -1,6 +1,6 @@
 #pragma once
-#include "global.hpp"
 #include "allegro_all.hpp"
+#include "global.hpp"
 
 class BlendMode {
 public:
@@ -25,4 +25,3 @@ BlendMode additiveBlender(double r, double g, double b, double a);
 BlendMode alphaBlender(ALLEGRO_COLOR color);
 BlendMode alphaBlender(double r, double g, double b, double a);
 BlendMode blitBlender();
-
