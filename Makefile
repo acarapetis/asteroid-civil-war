@@ -15,8 +15,11 @@ OBJECTS = global.o point.o mouse.o keyboard.o camera.o blending.o graphics.o obj
 all:	$(OBJECTS)
 	$(CXX) $(EXTRA) -o asteroids $(OBJECTS) $(LIBS)
 
-$(OBJECTS):	%.o:%.cpp %.hpp
+-include $(OBJECTS:.o=.d)
+
+$(OBJECTS):	%.o:%.cpp
 	$(CXX) $(EXTRA) $(CFLAGS) -c $<
+	$(CXX) $(EXTRA) $(CFLAGS) -MM $*.cpp > $*.d
 
 clean:
 	@rm -f *.o game
