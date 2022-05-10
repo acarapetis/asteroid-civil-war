@@ -1,6 +1,6 @@
 #include "game.hpp"
 
-#include <boost/bind.hpp>
+#include "blending.hpp"
 Game game;
 
 void initAllegro() {
@@ -9,7 +9,7 @@ void initAllegro() {
 }
 
 ALLEGRO_TIMER* initTimer() {
-    ALLEGRO_TIMER* t = al_install_timer(0.01);
+    ALLEGRO_TIMER* t = al_create_timer(0.01);
     al_start_timer(t);
     return t;
 }
@@ -17,6 +17,11 @@ ALLEGRO_TIMER* initTimer() {
 ALLEGRO_DISPLAY* initDisplay() {
     if (game.resizeable)
         al_set_new_display_flags(ALLEGRO_RESIZABLE);
+
+    al_init_primitives_addon();
+    al_init_image_addon();
+    al_init_font_addon();
+    al_init_ttf_addon();
 
     ALLEGRO_DISPLAY* display =
         al_create_display(game.screenSize.x, game.screenSize.y);
@@ -60,8 +65,8 @@ void Game::initialize() {
 
 R2 Game::screenCenter() { return this->screenSize / 2; }
 
-void Game::run(boost::function<bool(double)> update,
-               boost::function<bool(double)> draw) {
+void Game::run(std::function<bool(double)> update,
+               std::function<bool(double)> draw) {
     double t = al_current_time();
     double ticks = 0;
     for (;; ticks++) {
@@ -77,10 +82,11 @@ void Game::run(boost::function<bool(double)> update,
         if (!update(dt))
             break;
 
-        this->screenSize = R2(al_get_display_width(), al_get_display_height());
+        this->screenSize = R2(al_get_display_width(this->display),
+                              al_get_display_height(this->display));
 
         clearScreen();
-        setNormalBlending();
+        alphaBlender.apply();
 
         if (!draw(dt))
             break;
@@ -96,8 +102,8 @@ void Game::processEvents() {
         al_wait_for_event(this->queue, &event);
         switch (event.type) {
         case ALLEGRO_EVENT_DISPLAY_RESIZE:
-            this->screenSize =
-                R2(al_get_display_width(), al_get_display_height());
+            this->screenSize = R2(al_get_display_width(this->display),
+                                  al_get_display_height(this->display));
             al_acknowledge_resize(event.display.source);
             break;
         case ALLEGRO_EVENT_TIMER:

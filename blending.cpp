@@ -1,29 +1,14 @@
 #include "blending.hpp"
-void setNormalBlending() { setAlphaBlending(1.0); }
-void setAlphaBlending(double opacity) {
-    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA,
-                   al_map_rgba_f(1.0, 1.0, 1.0, opacity));
-}
-void setAdditiveBlending(double opacity) {
-    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_ONE,
-                   al_map_rgba_f(1.0, 1.0, 1.0, opacity));
-}
 
-BlendMode::BlendMode()
-    : sourceMode(ALLEGRO_ALPHA), destMode(ALLEGRO_INVERSE_ALPHA),
-      color(al_map_rgba_f(1, 1, 1, 1)) {}
 BlendMode::BlendMode(int sourceMode, int destMode, ALLEGRO_COLOR color)
     : sourceMode(sourceMode), destMode(destMode), color(color) {}
-void BlendMode::apply() {
-    al_set_blender(ALLEGRO_ADD, sourceMode, destMode, color);
+BlendMode::BlendMode(int sourceMode, int destMode)
+    : BlendMode(sourceMode, destMode, WHITE) {}
+void BlendMode::apply() const {
+    al_set_blender(ALLEGRO_ADD, sourceMode, destMode);
+    al_set_blend_color(color);
 }
-void BlendMode::apply(double opacity) {
-    float r, g, b;
-    al_unmap_rgb_f(this->color, &r, &g, &b);
-    al_set_blender(ALLEGRO_ADD, sourceMode, destMode,
-                   al_map_rgba_f(r, g, b, opacity));
-}
-BlendMode BlendMode::interpolateTo(BlendMode dest, double coeff) {
+BlendMode BlendMode::interpolateTo(BlendMode dest, double coeff) const {
     assert(this->sourceMode == dest.sourceMode);
     assert(this->destMode == dest.destMode);
     float r1, g1, b1, a1;
@@ -36,18 +21,10 @@ BlendMode BlendMode::interpolateTo(BlendMode dest, double coeff) {
                       b1 + coeff * (b2 - b1), a1 + coeff * (a2 - a1)));
 }
 
-BlendMode additiveBlender(ALLEGRO_COLOR color) {
-    return BlendMode(ALLEGRO_ALPHA, ALLEGRO_ONE, color);
-}
-BlendMode additiveBlender(double r, double g, double b, double a) {
-    return additiveBlender(al_map_rgba_f(r, g, b, a));
-}
-BlendMode alphaBlender(ALLEGRO_COLOR color) {
-    return BlendMode(ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA, color);
-}
-BlendMode alphaBlender(double r, double g, double b, double a) {
-    return alphaBlender(al_map_rgba_f(r, g, b, a));
-}
-BlendMode blitBlender() {
-    return BlendMode(ALLEGRO_ONE, ALLEGRO_ZERO, al_map_rgba_f(1, 1, 1, 1));
+const BlendMode additiveBlender(ALLEGRO_ALPHA, ALLEGRO_ONE, WHITE);
+const BlendMode alphaBlender(ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA, WHITE);
+const BlendMode blitBlender(ALLEGRO_ONE, ALLEGRO_ZERO, WHITE);
+
+BlendMode tintBlender(ALLEGRO_COLOR color) {
+    return BlendMode(ALLEGRO_CONST_COLOR, ALLEGRO_ZERO, color);
 }

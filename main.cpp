@@ -1,39 +1,12 @@
 #include "main.hpp"
 
-#include <boost/bind.hpp>
-#include <boost/math/special_functions/erf.hpp>
-
-typedef std::list<shared_ptr<Asteroid> > astV;
-typedef std::map<char, function<void()> > bindMap;
+typedef std::list<shared_ptr<Asteroid>> astV;
 astV asteroids;
 shared_ptr<Drawable> smoke;
 shared_ptr<ParticleType> gsmoke;
 shared_ptr<Ship> ship;
 
-// {{{ Random fiddly stuff
-double erfv[100];
-
-double myerf(double);
-void calcErf() {
-    for (int i = 0; i < 100; i++) {
-        double x = double(i - 50) / 50;
-        erfv[i] = double(boost::math::erf(x) + 1.0) / 2.00;
-    }
-}
-
-double myerf(double x) {
-    if (x <= 0)
-        return 0;
-    if (x >= 1)
-        return 1;
-    return erfv[int(x * 100)];
-}
-
-double ddt(R2 p) {
-    return 1;
-    // return 1-myerf( 0.004*((p-ship->center).length()+1) );
-}
-// }}}
+double ddt(R2 p) { return 1; }
 
 // {{{ logic update
 bool update(double dt) {
@@ -72,7 +45,7 @@ bool update(double dt) {
                                 R2(o->radius / 2, o->radius / 2).randomise(),
                             0, 1));
 
-                        foreach (shared_ptr<Asteroid> aa, toAdd) {
+                        for (shared_ptr<Asteroid> aa : toAdd) {
                             if (a->isColliding(aa))
                                 cont = true;
                         }
@@ -154,7 +127,7 @@ bool update(double dt) {
 
 // {{{ Draw a frame
 bool draw(double dt) {
-    setNormalBlending();
+    alphaBlender.apply();
     /*
     for (double ax = 0; ax < game.screenSize.x; ax += 20) {
         for (double ay = 0; ay < game.screenSize.y; ay += 20) {
@@ -165,7 +138,7 @@ bool draw(double dt) {
     }
     */
 
-    foreach (shared_ptr<Asteroid> a, asteroids) {
+    for (shared_ptr<Asteroid> a : asteroids) {
         a->draw();
     }
 
@@ -175,14 +148,16 @@ bool draw(double dt) {
     double tdt = (dt < 0.001 ? 0.1 : dt);
     fps = (1 / fpsSmoothing) * ((fpsSmoothing - 1) * fps + 1.0 / tdt);
 
-    string fpsStr = lexical_cast<string>(int(fps));
-    string astCountStr = lexical_cast<string>(asteroids.size());
-    string pCountStr = lexical_cast<string>(game.ps->particleCount());
+    string fpsStr = to_string(int(fps));
+    string astCountStr = to_string(asteroids.size());
+    string pCountStr = to_string(game.ps->particleCount());
 
-    al_draw_text(game.smallfont, 0, 0, -1, (fpsStr + " FPS").c_str());
-    al_draw_text(game.smallfont, 0, 30, -1,
+    al_draw_text(game.smallfont, WHITE, 0, 0, ALLEGRO_ALIGN_LEFT,
+                 (fpsStr + " FPS").c_str());
+    al_draw_text(game.smallfont, WHITE, 0, 30, ALLEGRO_ALIGN_LEFT,
                  (astCountStr + " asteroids").c_str());
-    al_draw_text(game.smallfont, 0, 60, -1, (pCountStr + " particles").c_str());
+    al_draw_text(game.smallfont, WHITE, 0, 60, ALLEGRO_ALIGN_LEFT,
+                 (pCountStr + " particles").c_str());
     return true;
 }
 // }}}
@@ -204,9 +179,9 @@ void testPolygon() {
     vector<Polygon> pps = p.slice(R2(-18, 22), -0.2);
     pps.push_back(p);
 
-    foreach (Polygon poly, pps) {
+    for (Polygon poly : pps) {
         cout << "polygon: ";
-        foreach (R2 point, poly.getPoints()) {
+        for (R2 point : poly.getPoints()) {
             cout << "{ " << point.x << ", " << point.y << " }, ";
         }
         cout << endl;
@@ -218,7 +193,6 @@ void testPolygon() {
 
 int main(int argc, char** argv) {
     testPolygon();
-    calcErf();
     game = Game();
     game.initialize();
 
@@ -231,7 +205,7 @@ int main(int argc, char** argv) {
     }
 
     smoke = shared_ptr<DynamicDrawable>(new DynamicDrawable(
-        boost::bind(&generateAsteroidPolygon, 5, 0.5, M_PI * 2 / 3, WHITE)));
+        std::bind(&generateAsteroidPolygon, 5, 0.5, M_PI * 2 / 3, WHITE)));
 
     // smoke = shared_ptr<Sprite>(new Sprite(R2(), al_load_png("bigsmoke.png"),
     // 0, 0.05));
@@ -245,17 +219,18 @@ int main(int argc, char** argv) {
     shipShape.push_back(R2(-16, 10));
     shipShape.push_back(R2(-10, 0));
     shipShape.push_back(R2(-16, -10));
-    shared_ptr<Polygon> sp(new Polygon(shipShape, WHITE));
-    ship = shared_ptr<Ship>(
-        new Ship(sp, shared_ptr<EmitterType>(new EmitterType(gsmoke, 10))));
+    shared_ptr<Polygon> sp = make_shared<Polygon>(shipShape, WHITE);
+    ship = make_shared<Ship>(sp, make_shared<EmitterType>(gsmoke, 10));
     game.camera.follow(&ship->center);
 
     gsmoke->obeyGravity = true;
     gsmoke->lifetime = 2; // Seconds
     gsmoke->zOrder = 1;
     gsmoke->acceleration = R2(0, 0);
-    gsmoke->initialBlender = alphaBlender(al_map_rgba_f(1.0, 1.0, 0.0, 1.0));
-    gsmoke->finalBlender = alphaBlender(al_map_rgba_f(1.0, 0.0, 0.0, 0.0));
+    gsmoke->initialBlender = alphaBlender;
+    gsmoke->finalBlender = alphaBlender;
+    gsmoke->initialTint = al_map_rgba_f(1.0, 1.0, 0.0, 1.0);
+    gsmoke->finalTint = al_map_rgba_f(1.0, 0.0, 0.0, 0.0);
     gsmoke->initialScale = 1.0;
     gsmoke->deltaScale = 0.7;
     gsmoke->drag = 1;

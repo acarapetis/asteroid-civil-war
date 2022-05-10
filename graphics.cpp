@@ -7,7 +7,7 @@ void drawPixel(double x, double y, ALLEGRO_COLOR c) {
 }
 void drawTransformedBitmap(ALLEGRO_BITMAP* bitmap, double ax, double ay,
                            double bx, double by, double xscale, double yscale,
-                           double rotation) {
+                           double rotation, ALLEGRO_COLOR tint) {
     R2 w = game.camera.w2s(R2(bx, by));
     bx = w.x;
     by = w.y;
@@ -15,8 +15,8 @@ void drawTransformedBitmap(ALLEGRO_BITMAP* bitmap, double ax, double ay,
     yscale = game.camera.w2s(yscale);
     rotation += game.camera.rotation;
     rotation *= -1;
-    al_draw_rotated_scaled_bitmap(bitmap, ax, ay, bx, by, xscale, yscale,
-                                  rotation, 0);
+    al_draw_tinted_scaled_rotated_bitmap(bitmap, tint, ax, ay, bx, by, xscale,
+                                         yscale, rotation, 0);
     // this optimisation did bugger-all:
     // seems that either allegro does plenty by itself or gcc
     // is smarter than I thought.

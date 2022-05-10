@@ -138,6 +138,7 @@ R2 R2::reflectInPlane(R2 anyPoint, double theta) {
     return (theta == 0 ? pSpace : pSpace.rotate(theta, anyPoint));
 }
 void R2::print() { std::cout << x << "," << y; }
+R2 operator*(double k, R2 p) { return R2(k * p.x, k * p.y); }
 
 bool pointInPolygon(R2 point, std::list<R2> polygon) {
     int c = 0;

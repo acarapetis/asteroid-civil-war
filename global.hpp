@@ -2,30 +2,24 @@
 #include <assert.h>
 
 #include <algorithm>
-#include <boost/foreach.hpp>
-#include <boost/function.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <list>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "allegro_all.hpp"
-#define foreach BOOST_FOREACH
-using boost::function;
-using boost::lexical_cast;
-using boost::shared_ptr;
-using boost::weak_ptr;
 using std::cout;
 using std::endl;
 using std::list;
+using std::make_shared;
+using std::shared_ptr;
 using std::string;
+using std::to_string;
 using std::vector;
 
 class R2;
@@ -61,11 +55,6 @@ const ALLEGRO_COLOR MAGENTA = al_map_rgba_f(1.0, 0.0, 1.0, 1.0);
 const ALLEGRO_COLOR CYAN = al_map_rgba_f(0.0, 1.0, 1.0, 1.0);
 const ALLEGRO_COLOR ORANGE = al_map_rgba_f(1.0, 0.5, 0.0, 1.0);
 
-template <class T> T lerp(T a, T b, double t) { return a + (b - a) * t; }
-
-template <class T>
-std::list<T> lmap(std::list<T> original, boost::function<T(T)> f) {
-    std::list<T> r;
-    std::copy(original.begin(), original.end(), r.begin());
-    std::transform(r.begin(), r.end(), f);
+template <class T> inline T lerp(T a, T b, double t) {
+    return (1 - t) * a + t * b;
 }

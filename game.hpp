@@ -3,7 +3,7 @@
 
 class Game;
 
-#include <boost/function.hpp>
+#include <functional>
 
 #include "allegro_all.hpp"
 #include "camera.hpp"
@@ -34,8 +34,8 @@ public:
 
     Game();
     void initialize();
-    void run(boost::function<bool(double)> update,
-             boost::function<bool(double)> draw);
+    void run(std::function<bool(double)> update,
+             std::function<bool(double)> draw);
     void processEvents();
 };
 

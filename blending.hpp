@@ -7,21 +7,16 @@ public:
     int sourceMode, destMode;
     ALLEGRO_COLOR color;
 
-    BlendMode();
+    BlendMode(int sourceMode, int destMode);
     BlendMode(int sourceMode, int destMode, ALLEGRO_COLOR color);
 
-    void apply();
-    void apply(double opacity);
+    void apply() const;
 
-    BlendMode interpolateTo(BlendMode dest, double coeff);
+    BlendMode interpolateTo(BlendMode dest, double coeff) const;
 };
 
-void setNormalBlending();
-void setAlphaBlending(double opacity);
-void setAdditiveBlending(double opacity);
+extern const BlendMode additiveBlender;
+extern const BlendMode alphaBlender;
+extern const BlendMode blitBlender;
 
-BlendMode additiveBlender(ALLEGRO_COLOR color);
-BlendMode additiveBlender(double r, double g, double b, double a);
-BlendMode alphaBlender(ALLEGRO_COLOR color);
-BlendMode alphaBlender(double r, double g, double b, double a);
-BlendMode blitBlender();
+BlendMode tintBlender(ALLEGRO_COLOR color);

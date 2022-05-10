@@ -1,5 +1,5 @@
 #pragma once
-#include <boost/function.hpp>
+#include <functional>
 
 #include "allegro_all.hpp"
 #include "blending.hpp"
@@ -13,7 +13,7 @@ public:
     // Pure Virtuals:
     virtual shared_ptr<Drawable> freeze() = 0;
     virtual void draw(R2 pivot = R2(0, 0), double radians = 0,
-                      double scale = 1.0) = 0;
+                      double scale = 1.0, ALLEGRO_COLOR tint = WHITE) = 0;
     virtual std::string describe() = 0;
 };
 
@@ -30,7 +30,8 @@ public:
     Sprite(R2 center, ALLEGRO_BITMAP* bitmap, double rotation = 0,
            double scale = 1);
 
-    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0);
+    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0,
+              ALLEGRO_COLOR tint = WHITE);
     std::string describe();
 };
 
@@ -50,7 +51,8 @@ public:
     Circle(R2 center, ALLEGRO_COLOR color, double radius, bool filled = true,
            double border = -1);
 
-    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0);
+    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0,
+              ALLEGRO_COLOR tint = WHITE);
     std::string describe();
 };
 
@@ -66,7 +68,8 @@ public:
     Line(R2 start, R2 end, ALLEGRO_COLOR color, double thickness = 0);
 
     void draw();
-    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0);
+    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0,
+              ALLEGRO_COLOR tint = WHITE);
     std::string describe();
 };
 
@@ -85,7 +88,8 @@ public:
     Polygon(std::list<R2> points, ALLEGRO_COLOR color, double thickness = 0);
 
     void addPoint(R2 p);
-    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0);
+    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0,
+              ALLEGRO_COLOR tint = WHITE);
 
     bool mouseInside(R2 pivot, double radians, double scale);
 
@@ -98,30 +102,32 @@ public:
 };
 
 class DynamicDrawable : public Drawable {
-    boost::function<shared_ptr<Drawable>()> generator;
+    std::function<shared_ptr<Drawable>()> generator;
 
 public:
-    DynamicDrawable(boost::function<shared_ptr<Drawable>()> generator);
+    DynamicDrawable(std::function<shared_ptr<Drawable>()> generator);
     shared_ptr<Drawable> freeze();
 
-    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0);
+    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0,
+              ALLEGRO_COLOR tint = WHITE);
     std::string describe();
 };
 
 class CompoundDrawable : public Drawable {
-    std::vector<shared_ptr<Drawable> > visualComponents;
+    std::vector<shared_ptr<Drawable>> visualComponents;
 
-    std::vector<shared_ptr<Drawable> >::iterator begin();
-    std::vector<shared_ptr<Drawable> >::iterator end();
+    std::vector<shared_ptr<Drawable>>::iterator begin();
+    std::vector<shared_ptr<Drawable>>::iterator end();
 
 public:
     CompoundDrawable();
-    CompoundDrawable(std::vector<shared_ptr<Drawable> > visualComponents);
+    CompoundDrawable(std::vector<shared_ptr<Drawable>> visualComponents);
 
     void addDrawable(shared_ptr<Drawable> d);
     shared_ptr<Drawable> freeze();
 
-    void draw(R2 pivot = R2(0, 0), double rotation = 0, double scale = 1.0);
+    void draw(R2 pivot = R2(0, 0), double rotation = 0, double scale = 1.0,
+              ALLEGRO_COLOR tint = WHITE);
     std::string describe();
 };
 
@@ -135,10 +141,10 @@ public:
     Instance(shared_ptr<Drawable> visual, R2 center, double rotation = 0,
              double scale = 1);
 
-    void draw();
+    void draw(ALLEGRO_COLOR tint = WHITE);
 };
 
-class Gravitee { // More of a mixin, but C++ blows
+class Gravitee { // More of a mixin
 public:
     R2 center;
     R2 velocity;
@@ -160,7 +166,7 @@ public:
                  bool obeyGravity = true);
 
     virtual void tick(double dt);
-    virtual void draw();
+    virtual void draw(ALLEGRO_COLOR tint = WHITE);
 };
 
 class Ship : public GravInstance {
@@ -173,7 +179,7 @@ public:
 
     void thrust(double force, double dt);
     void tick(double dt);
-    void draw();
+    void draw(ALLEGRO_COLOR tint = WHITE);
 };
 
 #include "graphics.hpp"

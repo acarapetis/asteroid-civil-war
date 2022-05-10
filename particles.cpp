@@ -1,23 +1,29 @@
 #include "particles.hpp"
 
 ParticleType::ParticleType(shared_ptr<Drawable> visual)
-    : visual(visual), lifetime(2), obeyGravity(false), drag(0),
-      initialBlender(alphaBlender(WHITE)), finalBlender(alphaBlender(WHITE)),
-      zOrder(0), initialVelocity(R2()), randomVelocity(R2()),
-      acceleration(R2()), initialRotation(0), randomRotation(0),
-      deltaRotation(0), initialScale(1), randomScale(0), deltaScale(1) {}
+    : visual(visual), lifetime(2), obeyGravity(false), initialVelocity(R2()),
+      randomVelocity(R2()), acceleration(R2()), drag(0), initialRotation(0),
+      randomRotation(0), deltaRotation(0), initialScale(1), randomScale(0),
+      deltaScale(1), initialBlender(alphaBlender), finalBlender(alphaBlender),
+      initialTint(WHITE), finalTint(WHITE), zOrder(0) {}
 BlendMode ParticleType::interpolateBlender(double age) {
     return initialBlender.interpolateTo(finalBlender, age / lifetime);
+}
+ALLEGRO_COLOR ParticleType::interpolateTint(double age) {
+    return lerp(initialTint, finalTint, age / lifetime);
 }
 
 void ParticleInstance::draw() {
     this->blender().apply();
-    this->visual->draw(this->getCenter(), this->getRotation(),
-                       this->getScale());
+    this->visual->draw(this->getCenter(), this->getRotation(), this->getScale(),
+                       this->tint());
 }
 
 BlendMode ParticleInstance::blender() {
     return this->type->interpolateBlender(this->age);
+}
+ALLEGRO_COLOR ParticleInstance::tint() {
+    return this->type->interpolateTint(this->age);
 }
 bool ParticleInstance::expired() {
     return this->type->lifetime > 0 && this->age > this->type->lifetime;
@@ -25,8 +31,8 @@ bool ParticleInstance::expired() {
 
 ParticleInstance::ParticleInstance(shared_ptr<ParticleType> type, R2 center,
                                    R2 velocity, double vRot)
-    : type(type), visual(type->visual),
-      Gravitee(center, velocity, 1, type->obeyGravity), vRot(vRot), age(0)
+    : Gravitee(center, velocity, 1, type->obeyGravity), type(type),
+      visual(type->visual), age(0), vRot(vRot)
 
 {
     this->rotation = this->type->initialRotation + this->vRot +
@@ -38,8 +44,8 @@ ParticleInstance::ParticleInstance(shared_ptr<ParticleType> type, R2 center,
 }
 ParticleInstance::ParticleInstance(shared_ptr<EmitterInstance> emitter)
     : Gravitee(emitter->position, R2(), 1, emitter->emitter->type->obeyGravity),
-      type(emitter->emitter->type), visual(type->visual),
-      vRot(emitter->rotation), age(0) {
+      type(emitter->emitter->type), visual(type->visual), age(0),
+      vRot(emitter->rotation) {
     if (emitter->freezeVisuals)
         freezeVisual();
     this->rotation = this->type->initialRotation + this->vRot +
@@ -89,7 +95,7 @@ int EmitterInstance::tick(double dt) {
 }
 
 ParticleSystem::ParticleSystem()
-    : particles(std::vector<shared_ptr<ParticleInstance> >()) {}
+    : particles(std::vector<shared_ptr<ParticleInstance>>()) {}
 void ParticleSystem::addParticleInstance(
     shared_ptr<ParticleInstance> instance) {
     this->particles.push_back(instance);
@@ -121,12 +127,12 @@ void ParticleSystem::draw() {
     // It'd be faster to keep each particle type in its own array
     // But you know, ehhhhhhhhhhhhh
     std::sort(particles.begin(), particles.end(), compareZOrder());
-    foreach (shared_ptr<ParticleInstance> p, particles) {
+    for (shared_ptr<ParticleInstance> p : particles) {
         p->draw();
     }
 }
 void ParticleSystem::applyGravity(R2 position, double mass) {
-    foreach (shared_ptr<ParticleInstance> p, particles) {
+    for (shared_ptr<ParticleInstance> p : particles) {
         p->gravitateTowards(position, mass);
     }
 }

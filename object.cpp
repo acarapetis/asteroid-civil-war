@@ -1,16 +1,14 @@
 #include "object.hpp"
 
-#include <boost/lambda/lambda.hpp>
-
 // Sprite
 Sprite::Sprite(R2 center, ALLEGRO_BITMAP* bitmap, double rotation, double scale)
     : bitmap(bitmap), center(center), scale(scale), rotation(rotation) {}
-void Sprite::draw(R2 pivot, double radians, double scale) {
+void Sprite::draw(R2 pivot, double radians, double scale, ALLEGRO_COLOR tint) {
     R2 nc = (this->center + pivot).rotateAndScale(radians, pivot, scale);
     R2 ic =
         R2(al_get_bitmap_width(bitmap) / 2, al_get_bitmap_height(bitmap) / 2);
     drawTransformedBitmap(bitmap, ic.x, ic.y, nc.x, nc.y, this->scale * scale,
-                          this->scale * scale, radians + rotation);
+                          this->scale * scale, radians + rotation, tint);
 #ifdef DEBUG
     printf("SPRITE center=%i,%i scale=%f, rotation=%f\n", int(nc.x), int(nc.y),
            this->scale * scale, radians + rotation);
@@ -32,17 +30,18 @@ Circle::Circle(R2 center, ALLEGRO_COLOR color, double radius, bool filled,
       border(border) {
     this->borderColor = al_map_rgba_f(0.0, 0.0, 0.0, 0.0);
 }
-void Circle::draw(R2 pivot, double radians, double scale) {
+void Circle::draw(R2 pivot, double radians, double scale, ALLEGRO_COLOR tint) {
     // cout << "\t\tDrawing Circle" << endl;
     //  Pivoting still matters! Revolution != Rotation.
     R2 ac = (pivot + this->center).rotateAndScale(radians, pivot, scale);
     int rad = int(this->radius * scale);
     int bor = int(this->border * scale);
     if (this->filled)
-        drawTransformedFilledCircle(ac.x, ac.y, rad, this->color);
+        drawTransformedFilledCircle(ac.x, ac.y, rad, this->color * tint);
     // al_draw_filled_circle(ac.x, ac.y, rad, this->color);
     if (bor >= 0)
-        drawTransformedCircleBorder(ac.x, ac.y, rad, this->borderColor, bor);
+        drawTransformedCircleBorder(ac.x, ac.y, rad, this->borderColor * tint,
+                                    bor);
     // al_draw_circle(ac.x, ac.y, rad, this->borderColor, bor);
 }
 string Circle::describe() { return "Circle"; }
@@ -53,7 +52,7 @@ shared_ptr<Drawable> Circle::freeze() {
 // Line
 Line::Line(R2 start, R2 end, ALLEGRO_COLOR color, double thickness)
     : start(start), end(end), color(color), thickness(thickness) {}
-void Line::draw(R2 pivot, double radians, double scale) {
+void Line::draw(R2 pivot, double radians, double scale, ALLEGRO_COLOR tint) {
     // cout << "\t\tDrawing Line" << endl;
     R2 tStart = (this->start + pivot).rotateAndScale(radians, pivot, scale);
     R2 tEnd = (this->end + pivot).rotateAndScale(radians, pivot, scale);
@@ -62,7 +61,7 @@ void Line::draw(R2 pivot, double radians, double scale) {
 #endif
     // cout   << tStart.x << "," << tStart.y << " "
     //<< tEnd.x   << "," << tEnd.y   << endl;
-    drawTransformedLine(tStart.x, tStart.y, tEnd.x, tEnd.y, color,
+    drawTransformedLine(tStart.x, tStart.y, tEnd.x, tEnd.y, color * tint,
                         int(thickness * scale));
     /*
     if (thickness * scale > 2) {
@@ -84,12 +83,13 @@ shared_ptr<Drawable> Line::freeze() {
 // DynamicDrawable
 
 DynamicDrawable::DynamicDrawable(
-    boost::function<shared_ptr<Drawable>()> generator)
+    std::function<shared_ptr<Drawable>()> generator)
     : generator(generator) {}
 shared_ptr<Drawable> DynamicDrawable::freeze() { return generator(); }
 
-void DynamicDrawable::draw(R2 pivot, double radians, double scale) {
-    (generator())->draw(pivot, radians, scale);
+void DynamicDrawable::draw(R2 pivot, double radians, double scale,
+                           ALLEGRO_COLOR tint) {
+    (generator())->draw(pivot, radians, scale, tint);
 }
 string DynamicDrawable::describe() {
     return "DynamicDrawable, sample content: " + (generator())->describe();
@@ -114,11 +114,11 @@ string Polygon::describe() {
          i++) {
         if (i != points.begin())
             s += " -> ";
-        s += lexical_cast<string>(i->x) + "," + lexical_cast<string>(i->y);
+        s += to_string(i->x) + "," + to_string(i->y);
     }
     return s;
 }
-void Polygon::draw(R2 pivot, double radians, double scale) {
+void Polygon::draw(R2 pivot, double radians, double scale, ALLEGRO_COLOR tint) {
     R2 prev;
     for (std::list<R2>::const_iterator i = points.begin(); i != points.end();
          i++) {
@@ -130,16 +130,10 @@ void Polygon::draw(R2 pivot, double radians, double scale) {
 
         R2 tstart = (start + pivot).rotateAndScale(radians, pivot, scale);
         R2 tend = (end + pivot).rotateAndScale(radians, pivot, scale);
-        drawTransformedLine(tstart.x, tstart.y, tend.x, tend.y, color,
+        drawTransformedLine(tstart.x, tstart.y, tend.x, tend.y, color * tint,
                             int(thickness * scale));
         prev = end;
     }
-
-#ifdef DEBUG
-    ALLEGRO_COLOR c = mouseInside(radians, pivot, scale) ? GREEN : RED;
-
-    drawTransformedFilledCircle(pivot.x, pivot.y, radius * scale / 4, c);
-#endif
 }
 void Polygon::flip() {
     for (std::list<R2>::iterator i = points.begin(); i != points.end(); i++)
@@ -199,16 +193,16 @@ vector<Polygon> Polygon::slice(R2 origin, double angle) {
 }
 
 // CompoundDrawable
-vector<shared_ptr<Drawable> >::iterator CompoundDrawable::begin() {
+vector<shared_ptr<Drawable>>::iterator CompoundDrawable::begin() {
     return this->visualComponents.begin();
 }
-vector<shared_ptr<Drawable> >::iterator CompoundDrawable::end() {
+vector<shared_ptr<Drawable>>::iterator CompoundDrawable::end() {
     return this->visualComponents.end();
 }
 
 CompoundDrawable::CompoundDrawable() {}
 CompoundDrawable::CompoundDrawable(
-    vector<shared_ptr<Drawable> > visualComponents)
+    vector<shared_ptr<Drawable>> visualComponents)
     : visualComponents(visualComponents){};
 void CompoundDrawable::addDrawable(shared_ptr<Drawable> d) {
     visualComponents.push_back(d);
@@ -216,20 +210,21 @@ void CompoundDrawable::addDrawable(shared_ptr<Drawable> d) {
 shared_ptr<Drawable> CompoundDrawable::freeze() {
     shared_ptr<CompoundDrawable> c(new CompoundDrawable());
 
-    foreach (shared_ptr<Drawable> d, visualComponents) {
+    for (shared_ptr<Drawable> d : visualComponents) {
         c->addDrawable(d->freeze());
     }
 
     return c;
 }
-void CompoundDrawable::draw(R2 pivot, double rotation, double scale) {
-    foreach (shared_ptr<Drawable> d, visualComponents) {
-        d->draw(pivot, rotation, scale);
+void CompoundDrawable::draw(R2 pivot, double rotation, double scale,
+                            ALLEGRO_COLOR tint) {
+    for (shared_ptr<Drawable> d : visualComponents) {
+        d->draw(pivot, rotation, scale, tint);
     }
 }
 std::string CompoundDrawable::describe() {
     string s;
-    foreach (shared_ptr<Drawable> d, visualComponents) {
+    for (shared_ptr<Drawable> d : visualComponents) {
         s += d->describe() + "\n";
     }
     return s;
@@ -238,12 +233,12 @@ std::string CompoundDrawable::describe() {
 Instance::Instance(shared_ptr<Drawable> visual, R2 center, double rotation,
                    double scale)
     : visual(visual), center(center), rotation(rotation), scale(scale) {}
-void Instance::draw() {
+void Instance::draw(ALLEGRO_COLOR tint) {
     R2 p = game.camera.w2s(center);
     // TODO: make this more precise so we don't have things disappearing near
     // the edge.  probably need a size member, rather than scale
     if (p.inBox(R2(-200, -200), game.screenSize + R2(200, 200)))
-        this->visual->draw(center, rotation, scale);
+        this->visual->draw(center, rotation, scale, tint);
 }
 
 // Gravity "mixin"
@@ -270,7 +265,9 @@ GravInstance::GravInstance(shared_ptr<Drawable> visual, R2 center, R2 velocity,
     : Gravitee(center, velocity, 1, obeyGravity), scale(scale), visual(visual) {
 }
 void GravInstance::tick(double dt) { center += velocity * dt; }
-void GravInstance::draw() { this->visual->draw(center, 0, this->scale); }
+void GravInstance::draw(ALLEGRO_COLOR tint) {
+    this->visual->draw(center, 0, this->scale, tint);
+}
 
 Ship::Ship(shared_ptr<Drawable> visual, shared_ptr<EmitterType> et, R2 center,
            R2 velocity, double scale, bool obeyGravity, double rotation)
@@ -278,7 +275,9 @@ Ship::Ship(shared_ptr<Drawable> visual, shared_ptr<EmitterType> et, R2 center,
       rotation(rotation), emitter(shared_ptr<EmitterInstance>(
                               new EmitterInstance(et, center, 0, R2(), true))) {
 }
-void Ship::draw() { this->visual->draw(center, rotation, scale); }
+void Ship::draw(ALLEGRO_COLOR tint) {
+    this->visual->draw(center, rotation, scale, tint);
+}
 void Ship::thrust(double force, double dt) {
     this->velocity += R2(force * dt, 0).rotate(rotation);
     game.ps->tickEmitter(this->emitter, dt * force / 20);

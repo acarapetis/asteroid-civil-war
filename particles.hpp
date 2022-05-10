@@ -52,11 +52,15 @@ public:
     BlendMode initialBlender;
     BlendMode finalBlender;
 
+    ALLEGRO_COLOR initialTint;
+    ALLEGRO_COLOR finalTint;
+
     double zOrder;
 
     ParticleType(shared_ptr<Drawable> visual);
 
     BlendMode interpolateBlender(double age);
+    ALLEGRO_COLOR interpolateTint(double age);
 };
 
 class ParticleInstance : public Gravitee {
@@ -70,6 +74,7 @@ public:
     shared_ptr<ParticleType> getType();
 
     BlendMode blender();
+    ALLEGRO_COLOR tint();
 
     double zOrder() const;
 
@@ -148,8 +153,8 @@ public:
 
 // This is the manager.
 class ParticleSystem {
-    std::vector<shared_ptr<ParticleInstance> > particles;
-    std::vector<shared_ptr<EmitterInstance> > emitters;
+    std::vector<shared_ptr<ParticleInstance>> particles;
+    std::vector<shared_ptr<EmitterInstance>> emitters;
 
 public:
     ParticleSystem();

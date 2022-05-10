@@ -9,6 +9,8 @@
 //#include "particles.hpp"
 #include "allegro_all.hpp"
 
+#include <functional>
+
 const double fpsSmoothing = 10;
 const double SMALLEST_ASTEROID = 10;
 const double SHIP_ROTATION_SPEED = 3;

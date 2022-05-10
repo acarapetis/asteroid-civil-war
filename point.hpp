@@ -53,6 +53,7 @@ public:
 
     void print(); // FOR DEBUGGING
 };
+R2 operator*(double k, R2 p);
 
 R2 polar(double radians, double mod);
 
