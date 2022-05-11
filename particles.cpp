@@ -1,11 +1,27 @@
 #include "particles.hpp"
 
+#include "mathtools.hpp"
+using std::shared_ptr;
+
 ParticleType::ParticleType(shared_ptr<Drawable> visual)
-    : visual(visual), lifetime(2), obeyGravity(false), initialVelocity(R2()),
-      randomVelocity(R2()), acceleration(R2()), drag(0), initialRotation(0),
-      randomRotation(0), deltaRotation(0), initialScale(1), randomScale(0),
-      deltaScale(1), initialBlender(alphaBlender), finalBlender(alphaBlender),
-      initialTint(WHITE), finalTint(WHITE), zOrder(0) {}
+    : visual(visual),
+      lifetime(2),
+      obeyGravity(false),
+      initialVelocity(R2()),
+      randomVelocity(R2()),
+      acceleration(R2()),
+      drag(0),
+      initialRotation(0),
+      randomRotation(0),
+      deltaRotation(0),
+      initialScale(1),
+      randomScale(0),
+      deltaScale(1),
+      initialBlender(alphaBlender),
+      finalBlender(alphaBlender),
+      initialTint(WHITE),
+      finalTint(WHITE),
+      zOrder(0) {}
 BlendMode ParticleType::interpolateBlender(double age) {
     return initialBlender.interpolateTo(finalBlender, age / lifetime);
 }
@@ -13,10 +29,10 @@ ALLEGRO_COLOR ParticleType::interpolateTint(double age) {
     return lerp(initialTint, finalTint, age / lifetime);
 }
 
-void ParticleInstance::draw() {
+void ParticleInstance::draw(const Camera& camera) {
     this->blender().apply();
     this->visual->draw(this->getCenter(), this->getRotation(), this->getScale(),
-                       this->tint());
+                       camera, this->tint());
 }
 
 BlendMode ParticleInstance::blender() {
@@ -31,8 +47,11 @@ bool ParticleInstance::expired() {
 
 ParticleInstance::ParticleInstance(shared_ptr<ParticleType> type, R2 center,
                                    R2 velocity, double vRot)
-    : Gravitee(center, velocity, 1, type->obeyGravity), type(type),
-      visual(type->visual), age(0), vRot(vRot)
+    : Gravitee(center, velocity, 1, type->obeyGravity),
+      type(type),
+      visual(type->visual),
+      age(0),
+      vRot(vRot)
 
 {
     this->rotation = this->type->initialRotation + this->vRot +
@@ -44,10 +63,11 @@ ParticleInstance::ParticleInstance(shared_ptr<ParticleType> type, R2 center,
 }
 ParticleInstance::ParticleInstance(shared_ptr<EmitterInstance> emitter)
     : Gravitee(emitter->position, R2(), 1, emitter->emitter->type->obeyGravity),
-      type(emitter->emitter->type), visual(type->visual), age(0),
+      type(emitter->emitter->type),
+      visual(type->visual),
+      age(0),
       vRot(emitter->rotation) {
-    if (emitter->freezeVisuals)
-        freezeVisual();
+    if (emitter->freezeVisuals) freezeVisual();
     this->rotation = this->type->initialRotation + this->vRot +
                      this->type->randomRotation * randFactor();
     this->velocity = this->type->initialVelocity.rotate(this->vRot) +
@@ -77,8 +97,11 @@ EmitterType::EmitterType(shared_ptr<ParticleType> type, double prob)
 EmitterInstance::EmitterInstance(shared_ptr<EmitterType> emitter, R2 position,
                                  double rotation, R2 velocity,
                                  bool freezeVisuals)
-    : emitter(emitter), position(position), velocity(velocity),
-      rotation(rotation), freezeVisuals(freezeVisuals) {
+    : emitter(emitter),
+      position(position),
+      velocity(velocity),
+      rotation(rotation),
+      freezeVisuals(freezeVisuals) {
     this->age = 0;
 }
 int EmitterInstance::tick(double dt) {
@@ -114,21 +137,20 @@ void ParticleSystem::tick(double dt) {
     for (unsigned int i = 0; i < emitters.size(); i++)
         this->tickEmitter(emitters[i], dt);
 
-    for (unsigned int i = 0; i < particles.size(); i++)
-        particles[i]->tick(dt);
+    for (unsigned int i = 0; i < particles.size(); i++) particles[i]->tick(dt);
 
     for (unsigned int i = 0; i < particles.size(); i++)
         if (particles[i]->expired()) {
             particles.erase(particles.begin() + i--);
         }
 }
-void ParticleSystem::draw() {
+void ParticleSystem::draw(const Camera& camera) {
     // This seems to be reasonably cheap, but remember it's n.log(n
     // It'd be faster to keep each particle type in its own array
     // But you know, ehhhhhhhhhhhhh
     std::sort(particles.begin(), particles.end(), compareZOrder());
     for (shared_ptr<ParticleInstance> p : particles) {
-        p->draw();
+        p->draw(camera);
     }
 }
 void ParticleSystem::applyGravity(R2 position, double mass) {

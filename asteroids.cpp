@@ -1,5 +1,10 @@
 #include "asteroids.hpp"
 
+#include "mathtools.hpp"
+
+using std::list;
+using std::shared_ptr;
+
 list<R2> generateAsteroid(double radius, double dr, double dtheta) {
     // o->addDrawable(new Circle(R2(0,0), al_map_rgba_f(1.0,1.0,1.0,1.0),
     // radius, false, 1.0, al_map_rgba_f(1.0,0.5,0.0,0.8)));
@@ -22,15 +27,17 @@ list<R2> generateAsteroid(double radius, double dr, double dtheta) {
 shared_ptr<Polygon> generateAsteroidPolygon(double radius, double dr,
                                             double dtheta, ALLEGRO_COLOR c) {
     shared_ptr<Polygon> p(new Polygon(generateAsteroid(radius, dr, dtheta), c));
-    p->flip();
+    // p->flip();
     return p;
 }
 
 Asteroid::Asteroid(double radius, R2 center, double rotation, double scale,
                    double omega, R2 velocity)
     : Instance(shared_ptr<Polygon>(), center, rotation, scale),
-      points(generateAsteroid(radius, 0.3, PI / 8)), omega(omega),
-      radius(radius), velocity(velocity) {
+      points(generateAsteroid(radius, 0.3, PI / 8)),
+      omega(omega),
+      radius(radius),
+      velocity(velocity) {
     visual = shared_ptr<Polygon>(new Polygon(points, WHITE));
 }
 
@@ -40,10 +47,9 @@ void Asteroid::tick(double dt) {
 }
 
 bool Asteroid::isColliding(Asteroid* other) {
-    if (this->radius > other->radius)
-        return other->isColliding(this);
+    if (this->radius > other->radius) return other->isColliding(this);
 
-    return // First check bounding circles, then run the long check if needed
+    return  // First check bounding circles, then run the long check if needed
         ((this->center - other->center).length() <
          (this->radius + other->radius)) &&
         polygonIntersection(
@@ -56,8 +62,7 @@ bool Asteroid::isColliding(Asteroid* other) {
 bool Asteroid::isColliding(shared_ptr<Asteroid> other) {
     // Always check if the small one is 'inside' the large one
     // TODO: move this check to polygonIntersection
-    if (this->radius > other->radius)
-        return other->isColliding(this);
+    if (this->radius > other->radius) return other->isColliding(this);
 
     return this->isColliding(other.get());
 }

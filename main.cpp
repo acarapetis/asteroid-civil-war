@@ -1,4 +1,65 @@
-#include "main.hpp"
+#include <allegro5/allegro_font.h>
+
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <memory>
+
+#include "asteroids.hpp"
+#include "camera.hpp"
+#include "game.hpp"
+#include "graphics.hpp"
+#include "keyboard.hpp"
+#include "mathtools.hpp"
+#include "mouse.hpp"
+#include "object.hpp"
+#include "particles.hpp"
+
+const double fpsSmoothing = 10;
+const double SMALLEST_ASTEROID = 10;
+const double SHIP_ROTATION_SPEED = 3;
+
+using std::cout;
+using std::endl;
+using std::list;
+using std::make_shared;
+using std::make_unique;
+using std::shared_ptr;
+using std::string;
+using std::to_string;
+using std::unique_ptr;
+using std::vector;
+
+Game game;
+
+double ddt(R2 p) { return 1; }
+
+class Ship : public GravInstance {
+public:
+    Ship(std::shared_ptr<Drawable> visual, std::shared_ptr<EmitterType> et,
+         R2 center = R2(0, 0), R2 velocity = R2(0, 0), double scale = 1,
+         bool obeyGravity = false, double rotation = 0)
+        : GravInstance(visual, center, velocity, scale, obeyGravity),
+          rotation(rotation),
+          emitter(make_shared<EmitterInstance>(et, center, 0, R2(), true)) {}
+    double rotation;
+    std::shared_ptr<EmitterInstance> emitter;
+
+    void thrust(double force, double dt) {
+        this->velocity += R2(force * dt, 0).rotate(rotation);
+        game.ps.tickEmitter(this->emitter, dt * force / 20);
+    }
+    void tick(double dt) {
+        center += velocity * dt;
+        this->emitter->position = this->center - R2(16, 0).rotate(rotation);
+        this->emitter->rotation = (this->rotation + PI);
+        this->emitter->velocity = this->velocity - polar(this->rotation, 30);
+        game.ps.tickEmitter(this->emitter, dt);
+    }
+    void draw(const Camera& camera, ALLEGRO_COLOR tint = WHITE) const {
+        this->visual->draw(center, rotation, scale, camera, tint);
+    }
+};
 
 typedef std::list<shared_ptr<Asteroid>> astV;
 astV asteroids;
@@ -6,21 +67,19 @@ shared_ptr<Drawable> smoke;
 shared_ptr<ParticleType> gsmoke;
 shared_ptr<Ship> ship;
 
-double ddt(R2 p) { return 1; }
-
 // {{{ logic update
 bool update(double dt) {
 #ifdef DEBUG
     printf("CAMERA scale=%f rotation=%f\n", game.camera.scale,
            game.camera.rotation);
-    printf("MOUSE position=%f,%f\n", game.mouse->position.x,
-           game.mouse->position.y);
+    printf("MOUSE position=%f,%f\n", game.mouse.position.x,
+           game.mouse.position.y);
 #endif
 
     astV toAdd;
-    for (astV::iterator i = asteroids.begin(); i != asteroids.end();) {
+    for (auto i = asteroids.begin(); i != asteroids.end();) {
         bool rmi = false;
-        for (astV::iterator j = i; j != asteroids.end();) {
+        for (auto j = i; j != asteroids.end();) {
             if (j == i) {
                 j++;
                 continue;
@@ -31,8 +90,7 @@ bool update(double dt) {
                 for (int k = 0; k < 6; k++) {
                     shared_ptr<Asteroid> o = (k < 3 ? a1 : a2);
                     shared_ptr<Asteroid> u = (k < 3 ? a2 : a1);
-                    if (o->radius < SMALLEST_ASTEROID)
-                        continue;
+                    if (o->radius < SMALLEST_ASTEROID) continue;
 
                     shared_ptr<Asteroid> a;
                     bool cont = true;
@@ -46,8 +104,7 @@ bool update(double dt) {
                             0, 1));
 
                         for (shared_ptr<Asteroid> aa : toAdd) {
-                            if (a->isColliding(aa))
-                                cont = true;
+                            if (a->isColliding(aa)) cont = true;
                         }
                     }
 
@@ -70,56 +127,44 @@ bool update(double dt) {
         }
     }
 
-    for (astV::const_iterator i = toAdd.begin(); i != toAdd.end(); i++) {
-        asteroids.push_back(*i);
-    }
-
-    for (astV::const_iterator i = asteroids.begin(); i != asteroids.end();
-         i++) {
-        (*i)->tick(dt * ddt((*i)->center));
+    std::copy(toAdd.begin(), toAdd.end(), std::back_inserter(asteroids));
+    for (const auto& asteroid : asteroids) {
+        asteroid->tick(dt * ddt(asteroid->center));
     }
 
     ship->tick(dt);
 
-    if (game.mouse->scrollUp())
-        game.camera.scale *= 1.1;
-    if (game.mouse->scrollDown())
-        game.camera.scale /= 1.1;
-    if (game.mouse->leftClick())
-        std::cout << "LEFT" << std::endl;
-    if (game.kb->pressed(ALLEGRO_KEY_A))
+    if (game.mouse.scrollUp()) game.camera.scale *= 1.1;
+    if (game.mouse.scrollDown()) game.camera.scale /= 1.1;
+    if (game.mouse.leftClick()) std::cout << "LEFT" << std::endl;
+    if (game.kb.pressed(ALLEGRO_KEY_A))
         game.camera.center.x -= game.camera.s2w(5);
-    if (game.kb->pressed(ALLEGRO_KEY_D))
+    if (game.kb.pressed(ALLEGRO_KEY_D))
         game.camera.center.x += game.camera.s2w(5);
-    if (game.kb->pressed(ALLEGRO_KEY_W))
+    if (game.kb.pressed(ALLEGRO_KEY_W))
         game.camera.center.y -= game.camera.s2w(5);
-    if (game.kb->pressed(ALLEGRO_KEY_S))
+    if (game.kb.pressed(ALLEGRO_KEY_S))
         game.camera.center.y += game.camera.s2w(5);
-    if (game.kb->pressed(ALLEGRO_KEY_ESCAPE))
-        return false;
-    if (game.kb->newpress(ALLEGRO_KEY_SPACE)) {
+    if (game.kb.pressed(ALLEGRO_KEY_ESCAPE)) return false;
+    if (game.kb.newpress(ALLEGRO_KEY_SPACE)) {
         shared_ptr<Asteroid> a(new Asteroid(
             10, ship->center + polar(ship->rotation, 32), ship->rotation, 1));
         a->velocity = ship->velocity + polar(ship->rotation, 100);
         asteroids.push_back(a);
     }
-    if (game.kb->pressed(ALLEGRO_KEY_UP)) {
-        if (game.kb->pressed(ALLEGRO_KEY_TAB))
+    if (game.kb.pressed(ALLEGRO_KEY_UP)) {
+        if (game.kb.pressed(ALLEGRO_KEY_TAB))
             ship->thrust(500.0, dt);
         else
             ship->thrust(100.0, dt);
     }
-    if (game.kb->pressed(ALLEGRO_KEY_LEFT))
+    if (game.kb.pressed(ALLEGRO_KEY_LEFT))
         ship->rotation -= SHIP_ROTATION_SPEED * dt;
-    if (game.kb->pressed(ALLEGRO_KEY_RIGHT))
+    if (game.kb.pressed(ALLEGRO_KEY_RIGHT))
         ship->rotation += SHIP_ROTATION_SPEED * dt;
-    if (game.kb->pressed(ALLEGRO_KEY_DELETE)) {
+    if (game.kb.pressed(ALLEGRO_KEY_DELETE)) {
         asteroids.clear();
     }
-
-    // emitter.velocity = R2(0,0);
-    // emitter.position = i->center;
-    // game.ps->tickEmitter(&emitter, dt);
 
     return true;
 }
@@ -128,21 +173,12 @@ bool update(double dt) {
 // {{{ Draw a frame
 bool draw(double dt) {
     alphaBlender.apply();
-    /*
-    for (double ax = 0; ax < game.screenSize.x; ax += 20) {
-        for (double ay = 0; ay < game.screenSize.y; ay += 20) {
-            R2 p = game.camera.s2w(R2(ax,ay));
-            drawTransformedFilledCircle(p.x, p.y, game.camera.s2w(4),
-    al_map_rgba_f(0.0,0.0,1.0, ddt(p)));
-        }
-    }
-    */
 
     for (shared_ptr<Asteroid> a : asteroids) {
-        a->draw();
+        a->draw(game.camera);
     }
 
-    ship->draw();
+    ship->draw(game.camera);
 
     static double fps = 60;
     double tdt = (dt < 0.001 ? 0.1 : dt);
@@ -150,13 +186,15 @@ bool draw(double dt) {
 
     string fpsStr = to_string(int(fps));
     string astCountStr = to_string(asteroids.size());
-    string pCountStr = to_string(game.ps->particleCount());
+    string pCountStr = to_string(game.ps.particleCount());
 
-    al_draw_text(game.smallfont, WHITE, 0, 0, ALLEGRO_ALIGN_LEFT,
+    static Font smallfont("font.ttf", 24, 0);
+
+    al_draw_text(smallfont, WHITE, 0, 0, ALLEGRO_ALIGN_LEFT,
                  (fpsStr + " FPS").c_str());
-    al_draw_text(game.smallfont, WHITE, 0, 30, ALLEGRO_ALIGN_LEFT,
+    al_draw_text(smallfont, WHITE, 0, 30, ALLEGRO_ALIGN_LEFT,
                  (astCountStr + " asteroids").c_str());
-    al_draw_text(game.smallfont, WHITE, 0, 60, ALLEGRO_ALIGN_LEFT,
+    al_draw_text(smallfont, WHITE, 0, 60, ALLEGRO_ALIGN_LEFT,
                  (pCountStr + " particles").c_str());
     return true;
 }
@@ -193,8 +231,6 @@ void testPolygon() {
 
 int main(int argc, char** argv) {
     testPolygon();
-    game = Game();
-    game.initialize();
 
     for (int i = 0; i < 10; i++) {
         shared_ptr<Asteroid> a(new Asteroid(randFactor() * 80 + 20,
@@ -224,7 +260,7 @@ int main(int argc, char** argv) {
     game.camera.follow(&ship->center);
 
     gsmoke->obeyGravity = true;
-    gsmoke->lifetime = 2; // Seconds
+    gsmoke->lifetime = 2;  // Seconds
     gsmoke->zOrder = 1;
     gsmoke->acceleration = R2(0, 0);
     gsmoke->initialBlender = alphaBlender;
@@ -241,20 +277,13 @@ int main(int argc, char** argv) {
     gsmoke->randomVelocity = R2(20, 20);
 
 #ifdef DEBUG
-    std::cout << ast->describe() << std::endl;
+    cout << ast->describe() << endl;
 #endif
 
-    testIntersections();
+    // testIntersections();
     //    return 0;
 
     game.run(&update, &draw);
 
     return 0;
-}
-
-void testIntersections() {
-    assert(intersectsPositiveX(R2(1, 1), R2(1, -1)));
-    assert(intersectsPositiveX(R2(100, 1), R2(1, -1)));
-    assert(intersectsPositiveX(R2(-5, 1), R2(10, -1)));
-    assert(!intersectsPositiveX(R2(-10, 1), R2(5, -1)));
 }

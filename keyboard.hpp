@@ -1,10 +1,10 @@
 #pragma once
-#include <allegro5/allegro5.h>
+#include <allegro5/allegro.h>
 
-#include "global.hpp"
+#include "allegro_wrapper.hpp"
 
 class Keyboard {
-    char key[256]; // 256 bytes is nothing to worry about
+    char key[256];  // 256 bytes is nothing to worry about
     static const char KEYPRESSED = 0x01;
     static const char KEYNEW = 0x02;
     static const char KEYREPEAT = 0x04;
@@ -14,7 +14,7 @@ class Keyboard {
     void keyrepeat(ALLEGRO_KEYBOARD_EVENT* kb);
 
 public:
-    Keyboard();
+    Keyboard(EventQueue& queue);
     void update();
     void clear();
 
@@ -24,4 +24,6 @@ public:
     bool repeating(char keycode);
     bool isnew(char keycode);
     bool newpress(char keycode);
+
+    operator ALLEGRO_EVENT_SOURCE*() const;
 };

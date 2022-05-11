@@ -1,5 +1,6 @@
 #pragma once
-#include "global.hpp"
+#include <list>
+#include <string>
 
 class R2 {
 public:
@@ -45,13 +46,14 @@ public:
     R2 rotate(double radians, R2 pivot) const;
     R2 scale(R2 pivot, double scale) const;
     R2 rotateAndScale(double radians, R2 pivot, double scale) const;
-    R2 randomise();
-    R2 reflectInPlane(R2 anyPoint, double theta);
+    R2 randomise() const;
+    R2 reflectInPlane(R2 anyPoint, double theta) const;
 
     R2 coerceDelta(R2 min, R2 max);
     void coerce(R2 min, R2 max);
 
-    void print(); // FOR DEBUGGING
+    std::string toString() const;
+    void print() const;
 };
 R2 operator*(double k, R2 p);
 

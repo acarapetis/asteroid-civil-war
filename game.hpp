@@ -1,11 +1,8 @@
 #pragma once
-#include "global.hpp"
-
-class Game;
 
 #include <functional>
 
-#include "allegro_all.hpp"
+#include "allegro_wrapper.hpp"
 #include "camera.hpp"
 #include "graphics.hpp"
 #include "keyboard.hpp"
@@ -16,19 +13,14 @@ class Game;
 // This is basically just a singleton full of globally useful stuff.
 // Not much of a design pattern, but it works.
 class Game {
+    EventQueue queue;
+
 public:
-    R2 screenSize;
-    bool resizeable;
+    Display display;
+    Keyboard kb;
+    Mouse mouse;
+    ParticleSystem ps;
     Camera camera;
-
-    ALLEGRO_DISPLAY* display;
-    ALLEGRO_EVENT_QUEUE* queue;
-    ALLEGRO_TIMER* timer;
-    ALLEGRO_FONT* smallfont;
-
-    shared_ptr<Keyboard> kb;
-    shared_ptr<Mouse> mouse;
-    shared_ptr<ParticleSystem> ps;
 
     R2 screenCenter();
 
@@ -37,9 +29,5 @@ public:
     void run(std::function<bool(double)> update,
              std::function<bool(double)> draw);
     void processEvents();
+    void handleScreenResize();
 };
-
-void initAllegro();
-ALLEGRO_TIMER* initTimer();
-ALLEGRO_DISPLAY* initDisplay();
-ALLEGRO_EVENT_QUEUE* initQueue();

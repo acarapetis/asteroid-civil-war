@@ -1,20 +1,29 @@
 #pragma once
+#include <allegro5/allegro_color.h>
+#include <allegro5/allegro_image.h>
+
 #include <functional>
+#include <list>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "allegro_all.hpp"
 #include "blending.hpp"
-#include "global.hpp"
+#include "camera.hpp"
+#include "colors.hpp"
+#include "graphics.hpp"
+#include "mouse.hpp"
+#include "point.hpp"
 
-class EmitterType;
-class EmitterInstance;
-
-class Drawable { // Pure Virtual!
+class Drawable {  // Pure Virtual!
 public:
     // Pure Virtuals:
-    virtual shared_ptr<Drawable> freeze() = 0;
-    virtual void draw(R2 pivot = R2(0, 0), double radians = 0,
-                      double scale = 1.0, ALLEGRO_COLOR tint = WHITE) = 0;
-    virtual std::string describe() = 0;
+    virtual std::shared_ptr<Drawable> freeze() const = 0;
+    virtual void draw(R2 pivot = {0, 0}, double radians = 0, double scale = 1.0,
+                      const Camera& camera = untransformedCamera,
+                      ALLEGRO_COLOR tint = WHITE) const = 0;
+    virtual std::string describe() const = 0;
+    virtual ~Drawable() = default;
 };
 
 class Sprite : public Drawable {
@@ -25,14 +34,15 @@ public:
     double scale;
     double rotation;
 
-    shared_ptr<Drawable> freeze();
+    std::shared_ptr<Drawable> freeze() const;
 
     Sprite(R2 center, ALLEGRO_BITMAP* bitmap, double rotation = 0,
            double scale = 1);
 
-    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0,
-              ALLEGRO_COLOR tint = WHITE);
-    std::string describe();
+    void draw(R2 pivot = {0, 0}, double radians = 0, double scale = 1.0,
+              const Camera& camera = untransformedCamera,
+              ALLEGRO_COLOR tint = WHITE) const;
+    std::string describe() const;
 };
 
 class Circle : public Drawable {
@@ -44,16 +54,17 @@ public:
     double border;
     ALLEGRO_COLOR borderColor;
 
-    shared_ptr<Drawable> freeze();
+    std::shared_ptr<Drawable> freeze() const;
 
     Circle(R2 center, ALLEGRO_COLOR color, double radius, bool filled,
            double border, ALLEGRO_COLOR borderColor);
     Circle(R2 center, ALLEGRO_COLOR color, double radius, bool filled = true,
            double border = -1);
 
-    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0,
-              ALLEGRO_COLOR tint = WHITE);
-    std::string describe();
+    void draw(R2 pivot = {0, 0}, double radians = 0, double scale = 1.0,
+              const Camera& camera = untransformedCamera,
+              ALLEGRO_COLOR tint = WHITE) const;
+    std::string describe() const;
 };
 
 class Line : public Drawable {
@@ -63,14 +74,15 @@ public:
     ALLEGRO_COLOR color;
     float thickness;
 
-    shared_ptr<Drawable> freeze();
+    std::shared_ptr<Drawable> freeze() const;
 
     Line(R2 start, R2 end, ALLEGRO_COLOR color, double thickness = 0);
 
-    void draw();
-    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0,
-              ALLEGRO_COLOR tint = WHITE);
-    std::string describe();
+    void draw() const;
+    void draw(R2 pivot = {0, 0}, double radians = 0, double scale = 1.0,
+              const Camera& camera = untransformedCamera,
+              ALLEGRO_COLOR tint = WHITE) const;
+    std::string describe() const;
 };
 
 class Polygon : public Drawable {
@@ -83,68 +95,75 @@ public:
     float thickness;
     double radius;
 
-    shared_ptr<Drawable> freeze();
+    std::shared_ptr<Drawable> freeze() const;
 
     Polygon(std::list<R2> points, ALLEGRO_COLOR color, double thickness = 0);
 
     void addPoint(R2 p);
-    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0,
-              ALLEGRO_COLOR tint = WHITE);
+    void draw(R2 pivot = {0, 0}, double radians = 0, double scale = 1.0,
+              const Camera& camera = untransformedCamera,
+              ALLEGRO_COLOR tint = WHITE) const;
 
-    bool mouseInside(R2 pivot, double radians, double scale);
+    bool isMouseInside(const Camera& camera, const Mouse& mouse, R2 pivot,
+                       double radians, double scale) const;
 
     void flip();
 
-    std::string describe();
-    std::list<R2> getPoints();
+    std::string describe() const;
+    std::list<R2> getPoints() const;
 
     std::vector<Polygon> slice(R2 origin, double angle);
 };
 
 class DynamicDrawable : public Drawable {
-    std::function<shared_ptr<Drawable>()> generator;
+    std::function<std::shared_ptr<Drawable>()> generator;
 
 public:
-    DynamicDrawable(std::function<shared_ptr<Drawable>()> generator);
-    shared_ptr<Drawable> freeze();
+    DynamicDrawable(std::function<std::shared_ptr<Drawable>()> generator);
+    std::shared_ptr<Drawable> freeze() const;
 
-    void draw(R2 pivot = R2(0, 0), double radians = 0, double scale = 1.0,
-              ALLEGRO_COLOR tint = WHITE);
-    std::string describe();
+    void draw(R2 pivot = {0, 0}, double radians = 0, double scale = 1.0,
+              const Camera& camera = untransformedCamera,
+              ALLEGRO_COLOR tint = WHITE) const;
+    std::string describe() const;
 };
 
 class CompoundDrawable : public Drawable {
-    std::vector<shared_ptr<Drawable>> visualComponents;
+    std::vector<std::shared_ptr<Drawable>> visualComponents;
 
-    std::vector<shared_ptr<Drawable>>::iterator begin();
-    std::vector<shared_ptr<Drawable>>::iterator end();
+    std::vector<std::shared_ptr<Drawable>>::const_iterator begin() const;
+    std::vector<std::shared_ptr<Drawable>>::const_iterator end() const;
+    std::back_insert_iterator<std::vector<std::shared_ptr<Drawable>>>
+    back_inserter();
 
 public:
     CompoundDrawable();
-    CompoundDrawable(std::vector<shared_ptr<Drawable>> visualComponents);
+    CompoundDrawable(std::vector<std::shared_ptr<Drawable>> visualComponents);
 
-    void addDrawable(shared_ptr<Drawable> d);
-    shared_ptr<Drawable> freeze();
+    void addDrawable(std::shared_ptr<Drawable> d);
+    std::shared_ptr<Drawable> freeze() const;
 
-    void draw(R2 pivot = R2(0, 0), double rotation = 0, double scale = 1.0,
-              ALLEGRO_COLOR tint = WHITE);
-    std::string describe();
+    void draw(R2 pivot = {0, 0}, double rotation = 0, double scale = 1.0,
+              const Camera& camera = untransformedCamera,
+              ALLEGRO_COLOR tint = WHITE) const;
+    std::string describe() const;
 };
 
 class Instance {
 public:
-    shared_ptr<Drawable> visual;
+    std::shared_ptr<Drawable> visual;
     R2 center;
     double rotation;
     double scale;
 
-    Instance(shared_ptr<Drawable> visual, R2 center, double rotation = 0,
+    Instance(std::shared_ptr<Drawable> visual, R2 center, double rotation = 0,
              double scale = 1);
 
-    void draw(ALLEGRO_COLOR tint = WHITE);
+    void draw(const Camera& camera = untransformedCamera,
+              ALLEGRO_COLOR tint = WHITE) const;
 };
 
-class Gravitee { // More of a mixin
+class Gravitee {  // More of a mixin
 public:
     R2 center;
     R2 velocity;
@@ -159,28 +178,14 @@ public:
 class GravInstance : public Gravitee {
 public:
     double scale;
-    shared_ptr<Drawable> visual;
+    std::shared_ptr<Drawable> visual;
 
-    GravInstance(shared_ptr<Drawable> visual, R2 center = R2(0, 0),
-                 R2 velocity = R2(0, 0), double scale = 1,
+    GravInstance(std::shared_ptr<Drawable> visual, R2 center = {0, 0},
+                 R2 velocity = {0, 0}, double scale = 1,
                  bool obeyGravity = true);
 
     virtual void tick(double dt);
-    virtual void draw(ALLEGRO_COLOR tint = WHITE);
+    virtual void draw(const Camera& camera = untransformedCamera,
+                      ALLEGRO_COLOR tint = WHITE) const;
+    virtual ~GravInstance() = default;
 };
-
-class Ship : public GravInstance {
-public:
-    Ship(shared_ptr<Drawable> visual, shared_ptr<EmitterType> et,
-         R2 center = R2(0, 0), R2 velocity = R2(0, 0), double scale = 1,
-         bool obeyGravity = false, double rotation = 0);
-    double rotation;
-    shared_ptr<EmitterInstance> emitter;
-
-    void thrust(double force, double dt);
-    void tick(double dt);
-    void draw(ALLEGRO_COLOR tint = WHITE);
-};
-
-#include "graphics.hpp"
-#include "particles.hpp"

@@ -1,33 +1,34 @@
 #include "mouse.hpp"
 
-Mouse::Mouse() {
+#include <stdexcept>
+
+Mouse::Mouse(EventQueue& queue) {
     if (!al_install_mouse())
-        throw Error::Mouse;
+        throw std::runtime_error("Could not initialize mouse");
+    queue.registerSource(*this);
     this->update();
     this->position = this->deltaPosition = this->scroll = this->deltaScroll =
         R2();
-    for (int i = 0; i < 3; i++)
-        pressed[i] = false;
+    for (int i = 0; i < 3; i++) pressed[i] = false;
 }
 void Mouse::update() {
-    for (int i = 0; i < 3; i++)
-        newstate[i] = false;
+    for (int i = 0; i < 3; i++) newstate[i] = false;
     this->deltaPosition = R2(0, 0);
     this->deltaScroll = R2(0, 0);
 }
 void Mouse::processEvent(ALLEGRO_EVENT& event) {
     switch (event.type) {
-    case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-        mousedown(&event.mouse);
-        break;
+        case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+            mousedown(&event.mouse);
+            break;
 
-    case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
-        mouseup(&event.mouse);
-        break;
+        case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+            mouseup(&event.mouse);
+            break;
 
-    case ALLEGRO_EVENT_MOUSE_AXES:
-        mouseaxes(&event.mouse);
-        break;
+        case ALLEGRO_EVENT_MOUSE_AXES:
+            mouseaxes(&event.mouse);
+            break;
     }
 }
 
@@ -59,3 +60,6 @@ bool Mouse::rightRelease() { return !pressed[1] && newstate[1]; }
 bool Mouse::middleRelease() { return !pressed[2] && newstate[2]; }
 bool Mouse::scrollUp() { return deltaScroll.y >= 0.5; }
 bool Mouse::scrollDown() { return deltaScroll.y <= -0.5; }
+Mouse::operator ALLEGRO_EVENT_SOURCE*() const {
+    return al_get_mouse_event_source();
+}

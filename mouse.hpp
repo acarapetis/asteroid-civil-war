@@ -1,7 +1,7 @@
 #pragma once
-#include <allegro5/allegro5.h>
+#include <allegro5/allegro.h>
 
-#include "global.hpp"
+#include "allegro_wrapper.hpp"
 
 class Mouse {
     bool pressed[3];
@@ -30,7 +30,7 @@ public:
     R2 scroll;
     R2 deltaScroll;
 
-    Mouse();
+    Mouse(EventQueue& queue);
     void update();
 
     bool leftClick();
@@ -49,4 +49,5 @@ public:
     bool scrollDown();
 
     void processEvent(ALLEGRO_EVENT& event);
+    operator ALLEGRO_EVENT_SOURCE*() const;
 };

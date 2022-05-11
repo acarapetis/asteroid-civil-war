@@ -1,6 +1,5 @@
 #pragma once
-#include "allegro_all.hpp"
-#include "global.hpp"
+#include "colors.hpp"
 
 class BlendMode {
 public:

@@ -8,46 +8,40 @@
  * applyGravity().
  */
 #pragma once
+#include <allegro5/allegro_color.h>
+
 #include <algorithm>
 #include <map>
 #include <utility>
 
-#include "allegro_all.hpp"
-
-// Everybody can know about everyone else.
-// Bite me, Djikstra. I'm anthropomorphising my classes.
-// What you going to do about it?
-class ParticleInstance;
-class ParticleType;
-class EmitterType;
-class EmitterInstance;
-class ParticleSystem;
-
 #include "blending.hpp"
-#include "global.hpp"
+#include "camera.hpp"
 #include "graphics.hpp"
 #include "object.hpp"
+#include "point.hpp"
+
+class EmitterInstance;
 
 // Numerically Calculated Particle - all values have a delta function
 // applied each frame, additive or multiplicative based on commonsense.
 class ParticleType {
 public:
-    shared_ptr<Drawable> visual;
+    std::shared_ptr<Drawable> visual;
     double lifetime;
     bool obeyGravity;
 
     R2 initialVelocity;
     R2 randomVelocity;
-    R2 acceleration; // additive
-    double drag;     // multiplicative
+    R2 acceleration;  // additive
+    double drag;      // multiplicative
 
     double initialRotation;
     double randomRotation;
-    double deltaRotation; // additive
+    double deltaRotation;  // additive
 
     double initialScale;
     double randomScale;
-    double deltaScale; // multiplicative
+    double deltaScale;  // multiplicative
 
     BlendMode initialBlender;
     BlendMode finalBlender;
@@ -57,21 +51,21 @@ public:
 
     double zOrder;
 
-    ParticleType(shared_ptr<Drawable> visual);
+    ParticleType(std::shared_ptr<Drawable> visual);
 
     BlendMode interpolateBlender(double age);
     ALLEGRO_COLOR interpolateTint(double age);
 };
 
 class ParticleInstance : public Gravitee {
-    shared_ptr<ParticleType> type;
-    shared_ptr<Drawable> visual;
+    std::shared_ptr<ParticleType> type;
+    std::shared_ptr<Drawable> visual;
 
 public:
     double age;
     double vRot;
 
-    shared_ptr<ParticleType> getType();
+    std::shared_ptr<ParticleType> getType();
 
     BlendMode blender();
     ALLEGRO_COLOR tint();
@@ -91,22 +85,21 @@ public:
     double getScale();
     R2 getCenter();
 
-    void draw();
+    void draw(const Camera& camera);
     void tick(double dt);
 
     // provided by gravitee: void gravitateTowards(R2 position, double mass);
-    ParticleInstance(shared_ptr<ParticleType> type, R2 center = R2(),
+    ParticleInstance(std::shared_ptr<ParticleType> type, R2 center = R2(),
                      R2 velocity = R2(), double vRot = 0);
-    ParticleInstance(shared_ptr<EmitterInstance> emitter);
+    ParticleInstance(std::shared_ptr<EmitterInstance> emitter);
 };
 
 struct compareZOrder {
     // Sorting relation for order of particle rendering
     // Precedence: zOrder, then age
-    bool operator()(const shared_ptr<ParticleInstance> a,
-                    const shared_ptr<ParticleInstance> b) const {
-        if (a->zOrder() == b->zOrder())
-            return a->age < b->age;
+    bool operator()(const std::shared_ptr<ParticleInstance> a,
+                    const std::shared_ptr<ParticleInstance> b) const {
+        if (a->zOrder() == b->zOrder()) return a->age < b->age;
         return a->zOrder() < b->zOrder();
     }
 };
@@ -114,16 +107,16 @@ struct compareZOrder {
 // This is a *type* of emitter
 class EmitterType {
 public:
-    shared_ptr<ParticleType> type;
+    std::shared_ptr<ParticleType> type;
     double prob;
 
-    EmitterType(shared_ptr<ParticleType> type, double prob);
+    EmitterType(std::shared_ptr<ParticleType> type, double prob);
 };
 
 // This is a particular instance of a physical emitter
 class EmitterInstance {
 public:
-    shared_ptr<EmitterType> emitter;
+    std::shared_ptr<EmitterType> emitter;
     double age;
 
     R2 position;
@@ -132,7 +125,7 @@ public:
 
     bool freezeVisuals;
 
-    EmitterInstance(shared_ptr<EmitterType> emitter, R2 position,
+    EmitterInstance(std::shared_ptr<EmitterType> emitter, R2 position,
                     double rotation = 0, R2 velocity = R2(0, 0),
                     bool freezeVisuals = false);
 
@@ -153,19 +146,19 @@ public:
 
 // This is the manager.
 class ParticleSystem {
-    std::vector<shared_ptr<ParticleInstance>> particles;
-    std::vector<shared_ptr<EmitterInstance>> emitters;
+    std::vector<std::shared_ptr<ParticleInstance>> particles;
+    std::vector<std::shared_ptr<EmitterInstance>> emitters;
 
 public:
     ParticleSystem();
 
-    void addParticleInstance(shared_ptr<ParticleInstance> instance);
-    void addEmitterInstance(shared_ptr<EmitterInstance> instance);
+    void addParticleInstance(std::shared_ptr<ParticleInstance> instance);
+    void addEmitterInstance(std::shared_ptr<EmitterInstance> instance);
 
-    void tickEmitter(shared_ptr<EmitterInstance> emitter, double dt);
+    void tickEmitter(std::shared_ptr<EmitterInstance> emitter, double dt);
 
     void tick(double dt);
-    void draw();
+    void draw(const Camera& camera);
 
     void applyGravity(R2 position, double mass);
 
