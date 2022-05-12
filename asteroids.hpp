@@ -12,17 +12,16 @@ class Asteroid : public Instance {
 private:
     // Ultra-sophisticated memory-leak debugging method:
     // char megawaste[10000];
-    const std::list<R2>& getPolygonPoints();
+    const std::list<R2>& getPolygonPoints() const;
 
 public:
     double omega;
     double radius;
     R2 velocity;
 
-    Asteroid(double radius, R2 center = R2(0, 0), double rotation = 0,
+    Asteroid(double radius = 10, R2 center = R2(0, 0), double rotation = 0,
              double scale = 1, double omega = 0, R2 velocity = R2());
     void tick(double dt);
 
-    bool isColliding(std::shared_ptr<Asteroid> other);
-    bool isColliding(Asteroid* other);
+    bool isColliding(const Asteroid& other) const;
 };

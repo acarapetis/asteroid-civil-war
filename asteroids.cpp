@@ -44,28 +44,22 @@ void Asteroid::tick(double dt) {
     this->rotation += omega * dt;
 }
 
-bool Asteroid::isColliding(Asteroid* other) {
-    if (this->radius > other->radius) return other->isColliding(this);
+bool Asteroid::isColliding(const Asteroid& other) const {
+    // Always check if the small one is 'inside' the large one
+    // TODO: move this check to polygonIntersection
+    if (this->radius > other.radius) return other.isColliding(*this);
 
     return  // First check bounding circles, then run the long check if needed
-        ((this->center - other->center).length() <
-         (this->radius + other->radius)) &&
+        ((this->center - other.center).length() <
+         (this->radius + other.radius)) &&
         polygonIntersection(
             ltransform(translate(this->getPolygonPoints(), this->center),
                        this->rotation, this->center, this->scale),
-            ltransform(translate(other->getPolygonPoints(), other->center),
-                       other->rotation, other->center, other->scale));
+            ltransform(translate(other.getPolygonPoints(), other.center),
+                       other.rotation, other.center, other.scale));
 }
 
-bool Asteroid::isColliding(shared_ptr<Asteroid> other) {
-    // Always check if the small one is 'inside' the large one
-    // TODO: move this check to polygonIntersection
-    if (this->radius > other->radius) return other->isColliding(this);
-
-    return this->isColliding(other.get());
-}
-
-const list<R2>& Asteroid::getPolygonPoints() {
+const list<R2>& Asteroid::getPolygonPoints() const {
     // Asteroid visuals are guaranteed to be Polygons
     return std::static_pointer_cast<Polygon>(visual)->points;
 }

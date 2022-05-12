@@ -30,4 +30,5 @@ public:
              std::function<bool(double)> draw);
     void processEvents();
     void handleScreenResize();
+    void draw(const Instance& d) const;
 };

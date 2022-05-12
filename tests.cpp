@@ -1,7 +1,13 @@
+#include <iostream>
+#include <list>
+#include <vector>
+
 #include "camera.hpp"
 #include "game.hpp"
 #include "mathtools.hpp"
 #include "point.hpp"
+
+using namespace std;
 
 Game game;
 
@@ -38,4 +44,33 @@ void testIntersections() {
     assert(intersectsPositiveX(R2(100, 1), R2(1, -1)));
     assert(intersectsPositiveX(R2(-5, 1), R2(10, -1)));
     assert(!intersectsPositiveX(R2(-10, 1), R2(5, -1)));
+}
+
+void testPolygon() {
+    list<R2> ps;
+    ps.push_back(R2(20, 20));
+    ps.push_back(R2(-20, 20));
+    ps.push_back(R2(-20, -20));
+    ps.push_back(R2(20, -20));
+    /*
+    ps.push_back(R2(5,5));
+    ps.push_back(R2(15,10));
+    ps.push_back(R2(20,-5));
+    ps.push_back(R2(10,-10));
+    */
+
+    Polygon p(ps, WHITE, 1);
+    vector<Polygon> pps = p.slice(R2(-18, 22), -0.2);
+    pps.push_back(p);
+
+    for (Polygon poly : pps) {
+        cout << "polygon: ";
+        for (R2 point : poly.points) {
+            cout << "{ " << point.x << ", " << point.y << " }, ";
+        }
+        cout << endl;
+    }
+
+    R2 ip = intersectionPoint(R2(10, -10), R2(20, 100));
+    cout << ip.x << "," << ip.y << endl;
 }

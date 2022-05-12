@@ -57,3 +57,7 @@ void Game::processEvents() {
         kb.processEvent(event);
     }
 }
+
+void Game::draw(const Instance& d) const {
+    d.draw(camera);
+}
