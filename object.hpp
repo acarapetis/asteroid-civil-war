@@ -86,11 +86,11 @@ public:
 };
 
 class Polygon : public Drawable {
-    std::list<R2> points;
-
     void updateRadius();
 
 public:
+    std::list<R2> points;
+
     ALLEGRO_COLOR color;
     float thickness;
     double radius;

@@ -9,9 +9,11 @@ std::shared_ptr<Polygon> generateAsteroidPolygon(double radius, double dr,
                                                  ALLEGRO_COLOR c);
 
 class Asteroid : public Instance {
-    std::list<R2> points;
+private:
     // Ultra-sophisticated memory-leak debugging method:
     // char megawaste[10000];
+    const std::list<R2>& getPolygonPoints();
+
 public:
     double omega;
     double radius;
@@ -23,5 +25,4 @@ public:
 
     bool isColliding(std::shared_ptr<Asteroid> other);
     bool isColliding(Asteroid* other);
-    std::list<R2> getPolygon();
 };

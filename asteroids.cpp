@@ -6,7 +6,8 @@ using std::list;
 using std::make_shared;
 using std::shared_ptr;
 
-list<R2> generateAsteroid(double radius, double dr, double dtheta) {
+list<R2> generateAsteroid(double radius, double dr = 0.3,
+                          double dtheta = PI / 8) {
     // o->addDrawable(new Circle(R2(0,0), al_map_rgba_f(1.0,1.0,1.0,1.0),
     // radius, false, 1.0, al_map_rgba_f(1.0,0.5,0.0,0.8)));
 
@@ -32,13 +33,11 @@ shared_ptr<Polygon> generateAsteroidPolygon(double radius, double dr,
 
 Asteroid::Asteroid(double radius, R2 center, double rotation, double scale,
                    double omega, R2 velocity)
-    : Instance(shared_ptr<Polygon>(), center, rotation, scale),
-      points(generateAsteroid(radius, 0.3, PI / 8)),
+    : Instance(make_shared<Polygon>(generateAsteroid(radius), WHITE), center,
+               rotation, scale),
       omega(omega),
       radius(radius),
-      velocity(velocity) {
-    visual = make_shared<Polygon>(points, WHITE);
-}
+      velocity(velocity) {}
 
 void Asteroid::tick(double dt) {
     this->center += velocity * dt;
@@ -52,9 +51,9 @@ bool Asteroid::isColliding(Asteroid* other) {
         ((this->center - other->center).length() <
          (this->radius + other->radius)) &&
         polygonIntersection(
-            ltransform(translate(this->getPolygon(), this->center),
+            ltransform(translate(this->getPolygonPoints(), this->center),
                        this->rotation, this->center, this->scale),
-            ltransform(translate(other->getPolygon(), other->center),
+            ltransform(translate(other->getPolygonPoints(), other->center),
                        other->rotation, other->center, other->scale));
 }
 
@@ -66,4 +65,7 @@ bool Asteroid::isColliding(shared_ptr<Asteroid> other) {
     return this->isColliding(other.get());
 }
 
-list<R2> Asteroid::getPolygon() { return points; }
+const list<R2>& Asteroid::getPolygonPoints() {
+    // Asteroid visuals are guaranteed to be Polygons
+    return std::static_pointer_cast<Polygon>(visual)->points;
+}

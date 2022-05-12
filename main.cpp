@@ -217,7 +217,7 @@ void testPolygon() {
 
     for (Polygon poly : pps) {
         cout << "polygon: ";
-        for (R2 point : poly.getPoints()) {
+        for (R2 point : poly.points) {
             cout << "{ " << point.x << ", " << point.y << " }, ";
         }
         cout << endl;
