@@ -9,14 +9,14 @@ I've spent a few hours in 2022 cleaning it up:
 - Now builds with a stable version of Allegro
 - Untangled some cyclic dependencies (the module dependencies now form a DAG)
 - Replaced libboost with C++17 standard library
-- Replcaed a lot of ugly iteration with ranged-for or STL algorithms
+- Replaced a lot of ugly iteration with ranged-for or STL algorithms
 
 It's still not particularly good code:
 
-- It leans heavily on a `shared_ptr` crutch. Most of these could be
+- It leans heavily on a crutch made of `shared_ptr`s. Most of these could be
   `unique_ptr`s or even direct data members.
 - There are some complex loops I didn't take the time to fully recomprehend -
-  these can probably be simplified by decomposed into STL algorithms.
+  these can probably be simplified by decomposition into STL algorithms.
 
 ## Dependencies
 
