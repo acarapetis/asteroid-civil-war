@@ -23,11 +23,9 @@ using std::cout;
 using std::endl;
 using std::list;
 using std::make_shared;
-using std::make_unique;
 using std::shared_ptr;
 using std::string;
 using std::to_string;
-using std::unique_ptr;
 using std::vector;
 
 Game game;
@@ -97,11 +95,11 @@ bool update(double dt) {
                     for (; cont;) {
                         cont = false;
 
-                        a = shared_ptr<Asteroid>(new Asteroid(
+                        a = make_shared<Asteroid>(
                             o->radius / 6,
                             o->center +
                                 R2(o->radius / 2, o->radius / 2).randomise(),
-                            0, 1));
+                            0, 1);
 
                         for (shared_ptr<Asteroid> aa : toAdd) {
                             if (a->isColliding(aa)) cont = true;
@@ -147,8 +145,8 @@ bool update(double dt) {
         game.camera.center.y += game.camera.s2w(5);
     if (game.kb.pressed(ALLEGRO_KEY_ESCAPE)) return false;
     if (game.kb.newpress(ALLEGRO_KEY_SPACE)) {
-        shared_ptr<Asteroid> a(new Asteroid(
-            10, ship->center + polar(ship->rotation, 32), ship->rotation, 1));
+        auto a = make_shared<Asteroid>(
+            10, ship->center + polar(ship->rotation, 32), ship->rotation, 1);
         a->velocity = ship->velocity + polar(ship->rotation, 100);
         asteroids.push_back(a);
     }
@@ -233,20 +231,20 @@ int main(int argc, char** argv) {
     testPolygon();
 
     for (int i = 0; i < 10; i++) {
-        shared_ptr<Asteroid> a(new Asteroid(randFactor() * 80 + 20,
-                                            R2(500, 300).randomise(), 0, 1,
-                                            randFactor() * PI - PI / 2));
+        auto a = make_shared<Asteroid>(randFactor() * 80 + 20,
+                                       R2(500, 300).randomise(), 0, 1,
+                                       randFactor() * PI - PI / 2);
         a->velocity = R2(10, 10).randomise();
         asteroids.push_back(a);
     }
 
-    smoke = shared_ptr<DynamicDrawable>(new DynamicDrawable(
-        std::bind(&generateAsteroidPolygon, 5, 0.5, M_PI * 2 / 3, WHITE)));
+    smoke = make_shared<DynamicDrawable>(
+        std::bind(&generateAsteroidPolygon, 5, 0.5, M_PI * 2 / 3, WHITE));
 
     // smoke = shared_ptr<Sprite>(new Sprite(R2(), al_load_png("bigsmoke.png"),
     // 0, 0.05));
 
-    gsmoke = shared_ptr<ParticleType>(new ParticleType(smoke));
+    gsmoke = make_shared<ParticleType>(smoke);
 
     // ALLEGRO_BITMAP *shipbmp  = al_load_png("ship.png");
 

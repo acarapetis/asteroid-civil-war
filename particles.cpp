@@ -1,6 +1,7 @@
 #include "particles.hpp"
 
 #include "mathtools.hpp"
+using std::make_shared;
 using std::shared_ptr;
 
 ParticleType::ParticleType(shared_ptr<Drawable> visual)
@@ -130,8 +131,7 @@ void ParticleSystem::tickEmitter(shared_ptr<EmitterInstance> emitter,
                                  double dt) {
     int n = emitter->tick(dt);
     for (int k = 0; k < n; k++)
-        this->addParticleInstance(
-            shared_ptr<ParticleInstance>(new ParticleInstance(emitter)));
+        this->addParticleInstance(make_shared<ParticleInstance>(emitter));
 }
 void ParticleSystem::tick(double dt) {
     for (unsigned int i = 0; i < emitters.size(); i++)

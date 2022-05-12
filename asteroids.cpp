@@ -3,6 +3,7 @@
 #include "mathtools.hpp"
 
 using std::list;
+using std::make_shared;
 using std::shared_ptr;
 
 list<R2> generateAsteroid(double radius, double dr, double dtheta) {
@@ -26,9 +27,7 @@ list<R2> generateAsteroid(double radius, double dr, double dtheta) {
 }
 shared_ptr<Polygon> generateAsteroidPolygon(double radius, double dr,
                                             double dtheta, ALLEGRO_COLOR c) {
-    shared_ptr<Polygon> p(new Polygon(generateAsteroid(radius, dr, dtheta), c));
-    // p->flip();
-    return p;
+    return make_shared<Polygon>(generateAsteroid(radius, dr, dtheta), c);
 }
 
 Asteroid::Asteroid(double radius, R2 center, double rotation, double scale,
@@ -38,7 +37,7 @@ Asteroid::Asteroid(double radius, R2 center, double rotation, double scale,
       omega(omega),
       radius(radius),
       velocity(velocity) {
-    visual = shared_ptr<Polygon>(new Polygon(points, WHITE));
+    visual = make_shared<Polygon>(points, WHITE);
 }
 
 void Asteroid::tick(double dt) {

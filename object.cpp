@@ -68,7 +68,7 @@ void Circle::draw(R2 pivot, double radians, double scale, const Camera& camera,
 }
 string Circle::describe() const { return "Circle"; }
 shared_ptr<Drawable> Circle::freeze() const {
-    return shared_ptr<Drawable>(new Circle(*this));
+    return make_shared<Circle>(*this);
 }
 
 // Line
@@ -99,9 +99,7 @@ string Line::describe() const {
     sprintf(buf, "Line, %f,%f -> %f,%f", start.x, start.y, end.x, end.y);
     return string(buf);
 }
-shared_ptr<Drawable> Line::freeze() const {
-    return shared_ptr<Drawable>(new Line(*this));
-}
+shared_ptr<Drawable> Line::freeze() const { return make_shared<Line>(*this); }
 
 // DynamicDrawable
 
@@ -163,7 +161,7 @@ bool Polygon::isMouseInside(const Camera& camera, const Mouse& mouse, R2 pivot,
 }
 list<R2> Polygon::getPoints() const { return points; }
 shared_ptr<Drawable> Polygon::freeze() const {
-    return shared_ptr<Drawable>(new Polygon(*this));
+    return make_shared<Polygon>(*this);
 }
 vector<Polygon> Polygon::slice(R2 origin, double angle) {
     // Tasty tasty megafunction

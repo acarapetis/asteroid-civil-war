@@ -1,7 +1,7 @@
 #include "camera.hpp"
 #include "game.hpp"
-#include "point.hpp"
 #include "mathtools.hpp"
+#include "point.hpp"
 
 Game game;
 
